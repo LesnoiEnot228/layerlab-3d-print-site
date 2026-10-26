@@ -23,6 +23,7 @@ function corsHeaders(origin) {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
     "Access-Control-Allow-Headers": "Content-Type, Accept, X-Order-Meta, X-File-Name, X-File-Size",
+    "Access-Control-Expose-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
   };
@@ -94,6 +95,7 @@ async function telegramSendDocumentStream(token, chatId, fileStream, fileName, c
     method: "POST",
     headers: { "Content-Type": `multipart/form-data; boundary=${boundary}` },
     body,
+    duplex: "half",
   });
   let result;
   try {
@@ -186,7 +188,17 @@ export default {
     const headers = originAllowed ? corsHeaders(origin) : {};
 
     if (url.pathname === "/health" && request.method === "GET") {
-      return json({ ok: true, configured: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) }, 200, headers);
+      // Expose only whether required secrets exist, never their values.
+      const healthHeaders = originAllowed ? headers : {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Cache-Control": "no-store",
+      };
+      return json({
+        ok: true,
+        configured: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID),
+        service: "layerlab-order-bot",
+      }, 200, healthHeaders);
     }
     if (url.pathname !== "/api/order") return json({ ok: false, error: "not-found" }, 404, headers);
     if (request.method === "OPTIONS") {
