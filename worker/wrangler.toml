@@ -2,7 +2,8 @@ name = "layerlab-order-bot"
 main = "src/index.js"
 compatibility_date = "2026-10-22"
 
-# Replace this with your GitHub Pages origin, e.g. "https://yourname.github.io".
-# Do not include a repository path or a trailing slash.
+# Set this to the exact origin serving the site (no path or trailing slash).
+# For GitHub Pages, verify the exact host under repository Settings -> Pages.
+# Keep this placeholder until confirmed; requests from other origins are rejected.
 [vars]
 ALLOWED_ORIGINS = "https://YOUR-GITHUB-USERNAME.github.io"
