@@ -6,4 +6,4 @@ compatibility_date = "2026-10-22"
 # For GitHub Pages, verify the exact host under repository Settings -> Pages.
 # Keep this placeholder until confirmed; requests from other origins are rejected.
 [vars]
-ALLOWED_ORIGINS = "https://YOUR-GITHUB-USERNAME.github.io"
+ALLOWED_ORIGINS = "https://lesnoienot228.github.io"
