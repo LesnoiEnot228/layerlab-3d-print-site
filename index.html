@@ -110,6 +110,8 @@
     .portfolio-grid .reveal{opacity:1;transform:none}
     /* Content must remain available even if an optional animation script is interrupted. */
     .reveal{opacity:1!important;transform:none!important}
+    /* The order starts with a clear customer choice; print settings stay internal. */
+    .order-entry{cursor:pointer}.order-entry:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.order-entry.selected{border-color:rgba(148,240,210,.62);background:linear-gradient(150deg,rgba(148,240,210,.13),rgba(13,17,23,.9))}.route-hidden,.technical-field{display:none!important}.analysis-settings{display:none}
 </style>
 </head>
 <body>
@@ -157,11 +159,11 @@
     </div></div>
 
     <section class="section" id="services"><div class="container">
-      <div class="section-head reveal"><div><div class="eyebrow" data-i18n="servicesEyebrow">Что можем напечатать</div><h2 data-i18n-html="servicesTitle">От милых фигурок<br>до нужных деталей.</h2></div><p data-i18n="servicesLead">Работаем с готовыми 3D-моделями. Подскажем по материалу, оценим возможность печати и согласуем стоимость до запуска.</p></div>
+      <div class="section-head reveal"><div><div class="eyebrow">Начать заказ</div><h2>Выбери удобный<br>способ начать.</h2></div><p>Покажем только нужные шаги: загрузка файла, поиск модели или быстрый переход в Telegram.</p></div>
       <div class="services-grid">
-        <article class="service-card reveal"><div class="service-number">01 / FIGURES</div><div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4.5"/><path d="M5.5 20c.3-4 2.7-6 6.5-6s6.2 2 6.5 6H5.5Z"/><path d="M7 5 5 3M17 5l2-2"/></svg></div><h3 data-i18n="service1Title">Фигурки и декор</h3><p data-i18n="service1Text">Персонажи, коллекционные предметы, настольный декор и небольшие подарки.</p><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></article>
-        <article class="service-card reveal"><div class="service-number">02 / PARTS</div><div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/><circle cx="12" cy="12" r="2"/></svg></div><h3 data-i18n="service2Title">Функциональные детали</h3><p data-i18n="service2Text">Крепления, переходники, корпуса и детали под конкретную задачу — после проверки геометрии.</p><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></article>
-        <article class="service-card reveal"><div class="service-number">03 / YOUR FILE</div><div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></div><h3 data-i18n="service3Title">Печать по вашему файлу</h3><p data-i18n="service3Text">У тебя уже есть STL, 3MF или OBJ? Пришли файл и опиши, какой результат нужен.</p><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></article>
+        <article class="service-card reveal order-entry" data-order-mode="file" role="button" tabindex="0"><div class="service-number">01 / FILE</div><div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></div><h3>Есть готовая модель</h3><p>Загрузи STL, OBJ или 3MF — сразу покажем ориентировочную стоимость.</p><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></article>
+        <article class="service-card reveal order-entry" data-order-mode="find" role="button" tabindex="0"><div class="service-number">02 / FIND</div><div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/><circle cx="12" cy="12" r="2"/></svg></div><h3>Хочу найти модель</h3><p>Введи идею, выбери модель в каталоге и загрузи её для расчёта.</p><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></article>
+        <article class="service-card reveal order-entry" data-order-mode="custom" role="button" tabindex="0"><div class="service-number">03 / CUSTOM</div><div class="service-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4.5"/><path d="M5.5 20c.3-4 2.7-6 6.5-6s6.2 2 6.5 6H5.5Z"/><path d="M7 5 5 3M17 5l2-2"/></svg></div><h3>Нужен индивидуальный проект</h3><p>Нет файла или нужна уникальная модель? Напиши нам в Telegram.</p><svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg></article>
       </div>
     </div></section>
 
@@ -222,7 +224,7 @@
       <div class="order-form-wrap"><div class="form-head"><h3 data-i18n="formTitle">Данные для расчёта</h3><span class="form-step" data-i18n="formLabel">ЗАЯВКА 01</span></div>
         <form id="orderForm" novalidate>
           <div class="form-grid">
-            <div class="model-idea-panel field full">
+            <div class="model-idea-panel field full" id="modelFinderPanel">
               <div class="model-idea-heading">
                 <span class="analysis-kicker" data-i18n="modelRequestEyebrow">ПОИСК МОДЕЛИ</span>
                 <h3 data-i18n="modelRequestTitle">Найди модель на удобной площадке</h3>
@@ -273,10 +275,10 @@
               </div>
               <div class="analysis-footer"><div><span class="analysis-kicker" data-i18n="estimatePreviewLabel">ОРИЕНТИРОВОЧНАЯ ЦЕНА</span><strong id="modelEstimateRange">—</strong><p id="modelEstimateNote" data-i18n="estimatePreviewNote">После анализа будет показан диапазон. Точную цену подтвердим перед печатью.</p></div><a class="btn btn-ghost btn-small" href="#order" id="estimateScrollOrder" data-i18n="estimateKeep">Перейти к заказу</a></div>
             </div>
-            <div class="field"><label for="material" data-i18n="materialLabel">Материал</label><select id="material" required><option value="PLA" data-i18n="optionPLA">PLA · для декора</option><option value="PETG" data-i18n="optionPETG">PETG · функциональный</option></select></div>
-            <div class="field"><label for="quantity" data-i18n="quantityLabel">Количество</label><select id="quantity"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option><option value="10+">10+</option></select></div>
-            <div class="field full"><span class="field-label" data-i18n="colorLabel">Цвет</span><div class="form-options"><label class="choice"><input type="radio" name="color" value="Белый / White" checked><span><i class="color-dot"></i><span data-i18n="whiteColor">Белый · сейчас в наличии</span></span></label></div></div>
-            <div class="field full"><span class="field-label" data-i18n="deliveryLabel">Как получить заказ</span><div class="form-options"><label class="choice"><input type="radio" name="delivery" value="Самовывоз в Минске" checked><span data-i18n="pickup">Самовывоз · Минск</span></label><label class="choice"><input type="radio" name="delivery" value="Почта по Беларуси"><span data-i18n="post">Почта по Беларуси</span></label></div></div>
+            <div class="field technical-field"><label for="material" data-i18n="materialLabel">Материал</label><select id="material" required><option value="PLA" data-i18n="optionPLA">PLA · для декора</option><option value="PETG" data-i18n="optionPETG">PETG · функциональный</option></select></div>
+            <div class="field technical-field"><label for="quantity" data-i18n="quantityLabel">Количество</label><select id="quantity"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option><option value="10+">10+</option></select></div>
+            <div class="field full technical-field"><span class="field-label" data-i18n="colorLabel">Цвет</span><div class="form-options"><label class="choice"><input type="radio" name="color" value="Белый / White" checked><span><i class="color-dot"></i><span data-i18n="whiteColor">Белый · сейчас в наличии</span></span></label></div></div>
+            <div class="field full technical-field"><span class="field-label" data-i18n="deliveryLabel">Как получить заказ</span><div class="form-options"><label class="choice"><input type="radio" name="delivery" value="Самовывоз в Минске" checked><span data-i18n="pickup">Самовывоз · Минск</span></label><label class="choice"><input type="radio" name="delivery" value="Почта по Беларуси"><span data-i18n="post">Почта по Беларуси</span></label></div></div>
             <div class="field"><label for="customerName" data-i18n="nameLabel">Как к тебе обращаться?</label><input id="customerName" autocomplete="name" placeholder="Имя" data-i18n-placeholder="namePlaceholder" required></div>
             <div class="field"><label for="customerContact" data-i18n="contactLabel">Контакт для ответа</label><input id="customerContact" autocomplete="off" placeholder="@username или номер телефона" data-i18n-placeholder="contactPlaceholder" aria-required="true"></div>
             <div class="field full"><label for="comment" data-i18n="commentLabel">Комментарий <span class="muted" data-i18n="optional">(необязательно)</span></label><textarea id="comment" placeholder="Размер, назначение, пожелания..." data-i18n-placeholder="commentPlaceholder"></textarea></div>
@@ -325,6 +327,19 @@
     $$('[data-lang]').forEach(b=>b.addEventListener('click',()=>setLanguage(b.dataset.lang)));
     $('#menuToggle').addEventListener('click',()=>{const open=$('#navLinks').classList.toggle('open');$('#menuToggle').setAttribute('aria-expanded',String(open))});
     $$('.nav-links a').forEach(a=>a.addEventListener('click',()=>{$('#navLinks').classList.remove('open');$('#menuToggle').setAttribute('aria-expanded','false')}));
+    const modelFinderPanel=$('#modelFinderPanel');
+    function setOrderMode(mode,shouldScroll=true){
+      if(mode==='custom'){window.open('https://t.me/yukimyne','_blank','noopener');return}
+      document.documentElement.dataset.orderMode=mode;
+      modelFinderPanel?.classList.toggle('route-hidden',mode!=='find');
+      $$('.order-entry').forEach(card=>card.classList.toggle('selected',card.dataset.orderMode===mode));
+      if(shouldScroll)$('#order')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+    $$('.order-entry').forEach(card=>{
+      card.addEventListener('click',()=>setOrderMode(card.dataset.orderMode));
+      card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setOrderMode(card.dataset.orderMode)}});
+    });
+    setOrderMode('file',false);
     $('#year').textContent=new Date().getFullYear();
     function showToast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),3000)}
     function clearSelectedFile(){selectedFile=null;$('#modelFile').value='';$('#fileStatus').classList.remove('show');$('#fileStatus').textContent='';$('#uploadBox').classList.remove('has-file');window.dispatchEvent(new CustomEvent('model-file-cleared'))}
