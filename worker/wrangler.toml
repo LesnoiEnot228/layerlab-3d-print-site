@@ -2,8 +2,7 @@ name = "layerlab-order-bot"
 main = "src/index.js"
 compatibility_date = "2026-10-22"
 
-# Set this to the exact origin serving the site (no path or trailing slash).
-# For GitHub Pages, verify the exact host under repository Settings -> Pages.
-# Keep this placeholder until confirmed; requests from other origins are rejected.
+# GitHub Pages origin for this repository. Keep the URL origin only: no repository path or trailing slash.
+# If you switch to a custom domain, update this value and redeploy the Worker.
 [vars]
 ALLOWED_ORIGINS = "https://lesnoienot228.github.io"
