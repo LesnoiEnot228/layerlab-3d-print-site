@@ -356,6 +356,19 @@
     const botStatus=$('#botConnectionStatus');
     const config=window.LAYERLAB_CONFIG||{};
     const orderApiUrl=String(config.orderApiUrl||'').trim();
+    const apiErrors={
+      'origin-not-allowed':'Сайт не разрешён настройками Worker (ALLOWED_ORIGINS).',
+      'telegram-not-configured':'Worker не настроен: проверь TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID.',
+      'telegram-send-failed':'Telegram отклонил файл или сообщение. Проверь токен, ID чата и доступность бота.',
+      'file-too-large-or-empty':'Файл пустой или превышает ограничение 30 МБ.',
+      'request-too-large':'Запрос превышает допустимый размер.',
+      'unsupported-file-type':'Поддерживаются только STL, 3MF и OBJ.',
+      'invalid-order-metadata':'Не удалось прочитать данные заявки. Обнови страницу и попробуй ещё раз.',
+      'name-and-contact-required':'Укажи имя и контакт для ответа.',
+      'invalid-material':'Выбран неизвестный материал. Обнови страницу.',
+      'invalid-quantity':'Выбрано недопустимое количество. Обнови страницу.',
+      'invalid-delivery':'Выбран недопустимый способ получения. Обнови страницу.'
+    };
     function showFormMessage(message,isError=false){const el=$('#formMessage');el.textContent=message;el.classList.add('show');el.classList.toggle('error',isError)}
     function updateBotStatus(){
       if(!botStatus)return;
@@ -367,19 +380,25 @@
     function makeAnalysisPayload(){
       if($('#modelAnalysis')?.hidden)return {};
       return {
-        dimensions:textValue('modelDimensions'),
-        triangles:textValue('modelTriangles'),
-        surface:textValue('modelSurface'),
-        volume:textValue('modelVolume'),
-        filament:textValue('modelWeight'),
-        printTime:textValue('modelTime'),
-        infill:$('#modelInfill')?.value?$('#modelInfill').value+'%':'',
-        layerHeight:$('#modelLayer')?.value?$('#modelLayer').value+' mm':'',
-        units:$('#modelUnits')?.value||'mm'
+        dimensions:textValue('modelDimensions'),triangles:textValue('modelTriangles'),
+        surface:textValue('modelSurface'),volume:textValue('modelVolume'),filament:textValue('modelWeight'),
+        printTime:textValue('modelTime'),infill:$('#modelInfill')?.value?$('#modelInfill').value+'%':'',
+        layerHeight:$('#modelLayer')?.value?$('#modelLayer').value+' mm':'',units:$('#modelUnits')?.value||'mm'
       };
+    }
+    function explainOrderError(error,result){
+      const code=String(result?.error||error?.message||'');
+      if(apiErrors[code])return apiErrors[code];
+      if(error instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(code))
+        return 'Не удалось соединиться с сервером заказов. Возможны неверный URL Worker, ошибка CORS или недоступный Worker. Заявка не отправлена; попробуй ещё раз или напиши нам в Telegram.';
+      if(code==='invalid-model-url')return copy[lang].invalidSourceUrl;
+      if(code==='model-or-file-required')return copy[lang].needFile;
+      if(code==='ignored-by-spam-filter')return 'Заявка не отправлена: сервер отклонил её как автоматическую. Очисти поле Website и попробуй ещё раз.';
+      return 'Не удалось отправить заявку'+(code?' ('+code+')':'')+'. Попробуй ещё раз или напиши нам в Telegram.';
     }
     orderForm.addEventListener('submit',async e=>{
       e.preventDefault();
+      if(submitButton.disabled)return;
       const modelRequest=$('#modelSearchInput')?.value.trim()||'';
       const sourceUrl=$('#modelSourceUrl')?.value.trim()||'';
       if(!selectedFile&&!modelRequest&&!sourceUrl){showToast(copy[lang].needFile);$('#modelSearchInput')?.focus();return}
@@ -388,22 +407,19 @@
       const contact=$('#customerContact').value.trim();
       if(!contact){showToast(copy[lang].invalidContact);$('#customerContact').focus();return}
       if(sourceUrl){try{const parsed=new URL(sourceUrl);if(!['http:','https:'].includes(parsed.protocol))throw new Error('protocol')}catch{showToast(copy[lang].invalidSourceUrl);$('#modelSourceUrl').focus();return}}
-      if(!orderApiUrl){showFormMessage(copy[lang].apiNotConfigured,true);showToast(copy[lang].apiNotConfigured);return}
+      if(!orderApiUrl){const message=copy[lang].apiNotConfigured;showFormMessage(message,true);showToast(message);return}
+      let apiUrl;
+      try{apiUrl=new URL(orderApiUrl);if(!['https:','http:'].includes(apiUrl.protocol))throw new Error('protocol')}catch{showFormMessage('В assets/config.js указан некорректный URL Worker.',true);return}
       const material=$('#material').value;
       const qty=$('#quantity').value;
       const color=$('input[name="color"]:checked')?.value||'Белый / White';
       const delivery=$('input[name="delivery"]:checked')?.value||'Самовывоз в Минске';
       const comment=$('#comment').value.trim();
       const estimate=textValue('modelEstimateRange')||textValue('estimateRange');
-      const analysis=makeAnalysisPayload();
-      const payload={
-        customerName:name,modelRequest,sourceUrl,material,quantity:qty,color,delivery,contact,comment,
-        estimate,analysis,language:lang,website:$('#website')?.value||''
-      };
+      const payload={customerName:name,modelRequest,sourceUrl,material,quantity:qty,color,delivery,contact,comment,estimate,analysis:makeAnalysisPayload(),language:lang,website:$('#website')?.value||''};
       const requestHeaders={'Accept':'application/json'};
       let requestBody;
       if(selectedFile){
-        // Stream the binary file as the request body. This avoids converting 10–30 MB files to multipart/base64 in a serverless function.
         requestHeaders['Content-Type']='application/octet-stream';
         requestHeaders['X-Order-Meta']=encodeURIComponent(JSON.stringify(payload));
         requestHeaders['X-File-Name']=encodeURIComponent(selectedFile.name);
@@ -417,22 +433,26 @@
       submitLabel.textContent=copy[lang].submitSending;
       showFormMessage(lang==='ru'?'Отправляем данные заказа и файл в Telegram-бот…':'Sending the order details and file to the Telegram bot…');
       try{
-        const response=await fetch(orderApiUrl,{method:'POST',body:requestBody,headers:requestHeaders});
-        let result={};try{result=await response.json()}catch{}
-        if(!response.ok||!result.ok)throw new Error(result.error||'send-failed');
+        const response=await fetch(apiUrl.href,{method:'POST',body:requestBody,headers:requestHeaders,mode:'cors',credentials:'omit',cache:'no-store'});
+        const responseText=await response.text();
+        let result={};
+        try{result=responseText?JSON.parse(responseText):{}}catch{throw new Error('invalid-server-response-'+response.status)}
+        if(!response.ok||!result.ok){const failure=new Error(result.error||'http-'+response.status);failure.result=result;failure.status=response.status;throw failure}
+        if(result.ignored)throw new Error('ignored-by-spam-filter');
         const successText=result.partial?copy[lang].sendPartial:copy[lang].sendSuccess;
-        showFormMessage((result.orderId?`#${result.orderId} · `:'')+successText,false);
+        showFormMessage((result.orderId?'#'+result.orderId+' · ':'')+successText,false);
         showToast(successText);
         submitButton.dataset.submitted='true';
       }catch(error){
-        console.error('Order submission failed:',error);
-        const message=error?.message==='Failed to fetch'?copy[lang].sendFailed:copy[lang].sendFailed;
+        console.error('LayerLab order submission failed:',{message:error?.message,status:error?.status,result:error?.result});
+        const message=explainOrderError(error,error?.result);
         showFormMessage(message,true);showToast(message);
       }finally{
         submitButton.disabled=false;
         submitLabel.textContent=copy[lang].submitCta;
       }
     });
+
     orderForm.addEventListener('input',()=>{if(submitButton.dataset.submitted){delete submitButton.dataset.submitted;showFormMessage('',false);$('#formMessage').classList.remove('show')}});
     window.addEventListener('site-language-change',updateBotStatus);
     updateBotStatus();
