@@ -108,6 +108,8 @@
     .portfolio-grid .work-media::after{display:block}.portfolio-grid .work-category{display:block;top:auto;bottom:16px;left:16px;color:#f5f8fa;background:rgba(9,12,17,.84);border-color:rgba(255,255,255,.23);font-weight:700;letter-spacing:.02em}.portfolio-grid .work-media img{object-fit:cover}
     /* Gallery must not depend on scroll animation support: every work is visible immediately. */
     .portfolio-grid .reveal{opacity:1;transform:none}
+    /* Content must remain available even if an optional animation script is interrupted. */
+    .reveal{opacity:1!important;transform:none!important}
 </style>
 </head>
 <body>
