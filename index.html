@@ -106,6 +106,8 @@
     body,button,input,select,textarea{font-family:Arial,Helvetica,sans-serif}
     .hero h1,.section-head h2,.order-copy h2,.materials-copy h2,.about-copy h2,.faq-title h2{letter-spacing:-.04em}
     .portfolio-grid .work-media::after{display:block}.portfolio-grid .work-category{display:block;top:auto;bottom:16px;left:16px;color:#f5f8fa;background:rgba(9,12,17,.84);border-color:rgba(255,255,255,.23);font-weight:700;letter-spacing:.02em}.portfolio-grid .work-media img{object-fit:cover}
+    /* Gallery must not depend on scroll animation support: every work is visible immediately. */
+    .portfolio-grid .reveal{opacity:1;transform:none}
 </style>
 </head>
 <body>
@@ -167,32 +169,32 @@
       <div class="portfolio-grid">
         <article class="work-card reveal" data-category="figures">
           <button class="work-media" data-lightbox="assets/figurine-cat.webp" data-title-ru="Котёнок" data-title-en="Kitten figure" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Котёнок">
-            <img src="assets/figurine-cat.webp" alt="Белый 3D-печатный котёнок" loading="lazy"><span class="work-category">Фигурка</span>
+            <img src="assets/figurine-cat.webp" alt="Белый 3D-печатный котёнок" loading="eager"><span class="work-category">Фигурка</span>
           </button>
         </article>
         <article class="work-card reveal" data-category="figures">
           <button class="work-media" data-lightbox="assets/figurine-sculpture.webp" data-title-ru="Фигурка" data-title-en="Printed sculpture" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Фигурка">
-            <img src="assets/figurine-sculpture.webp" alt="Декоративная 3D-печатная фигурка" loading="lazy"><span class="work-category">Скульптура</span>
+            <img src="assets/figurine-sculpture.webp" alt="Декоративная 3D-печатная фигурка" loading="eager"><span class="work-category">Скульптура</span>
           </button>
         </article>
         <article class="work-card reveal" data-category="parts">
           <button class="work-media" data-lightbox="assets/functional-part.webp" data-title-ru="Функциональная деталь" data-title-en="Functional part" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Функциональная деталь">
-            <img src="assets/functional-part.webp" alt="Функциональная деталь, напечатанная на 3D-принтере" loading="lazy"><span class="work-category">Деталь</span>
+            <img src="assets/functional-part.webp" alt="Функциональная деталь, напечатанная на 3D-принтере" loading="eager"><span class="work-category">Деталь</span>
           </button>
         </article>
         <article class="work-card reveal" data-category="figures">
           <button class="work-media" data-lightbox="assets/c131c8cd-6309-4d03-8123-30ce09827b5a.png" data-title-ru="Фигурка щенка" data-title-en="Dog figure" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Фигурка щенка">
-            <img src="assets/c131c8cd-6309-4d03-8123-30ce09827b5a.png" alt="Фигурка щенка из белого пластика" loading="lazy"><span class="work-category">Фигурка</span>
+            <img src="assets/c131c8cd-6309-4d03-8123-30ce09827b5a.png" alt="Фигурка щенка из белого пластика" loading="eager"><span class="work-category">Фигурка</span>
           </button>
         </article>
         <article class="work-card reveal" data-category="parts">
           <button class="work-media" data-lightbox="assets/4d5d6b2d-8e56-4123-8d18-ba1f2d3edd55.png" data-title-ru="Крепление" data-title-en="Printed mount" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Крепление">
-            <img src="assets/4d5d6b2d-8e56-4123-8d18-ba1f2d3edd55.png" alt="Небольшая функциональная деталь" loading="lazy"><span class="work-category">Деталь</span>
+            <img src="assets/4d5d6b2d-8e56-4123-8d18-ba1f2d3edd55.png" alt="Небольшая функциональная деталь" loading="eager"><span class="work-category">Деталь</span>
           </button>
         </article>
         <article class="work-card reveal" data-category="figures">
           <button class="work-media" data-lightbox="assets/d98ac8b1-f2e1-4b4a-9156-beda47d346ac.png" data-title-ru="Декоративная модель" data-title-en="Decorative model" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Декоративная модель">
-            <img src="assets/d98ac8b1-f2e1-4b4a-9156-beda47d346ac.png" alt="Белая декоративная модель" loading="lazy"><span class="work-category">Декор</span>
+            <img src="assets/d98ac8b1-f2e1-4b4a-9156-beda47d346ac.png" alt="Белая декоративная модель" loading="eager"><span class="work-category">Декор</span>
           </button>
         </article>
       </div>
