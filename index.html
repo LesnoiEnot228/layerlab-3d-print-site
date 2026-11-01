@@ -113,6 +113,26 @@
     .reveal{opacity:1!important;transform:none!important}
     /* The order starts with a clear customer choice; print settings stay internal. */
     .order-entry{cursor:pointer}.order-entry:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.order-entry.selected{border-color:rgba(148,240,210,.62);background:linear-gradient(150deg,rgba(148,240,210,.13),rgba(13,17,23,.9))}.route-hidden,.technical-field{display:none!important}.analysis-settings{display:none}
+    /* Keep the mobile hero compact and prevent its floating labels from colliding. */
+    @media(max-width:760px){
+      .hero{padding:24px 0 40px}
+      .hero-grid{gap:14px}
+      .hero-copy{padding:12px 0 0}
+      .hero h1{font-size:clamp(2.7rem,11.5vw,4.25rem);line-height:1.02;letter-spacing:-.055em;margin:14px 0 16px}
+      .hero-lead{font-size:.98rem;line-height:1.6;margin-bottom:20px}
+      .hero-actions{gap:10px}
+      .hero-actions .btn{min-height:50px}
+      .hero-note{align-items:flex-start;font-size:.78rem;line-height:1.55;margin-top:18px}
+      .hero-note .dot{flex:0 0 7px;margin-top:.42rem}
+      .hero-visual{height:clamp(350px,108vw,430px);min-height:0;margin:0}
+      .hero-image{inset:0;width:100%;height:100%;border-radius:22px;mask-image:linear-gradient(to bottom,black 0%,black 92%,transparent 100%)}
+      .image-label{left:12px;bottom:16px;width:min(250px,calc(100% - 24px));padding:15px;border-radius:16px;z-index:2}
+      .image-label strong{font-size:.93rem}
+      .image-label span{font-size:.77rem}
+      .orbit-tag{top:12px;right:12px;left:auto;max-width:calc(100% - 24px);padding:10px 13px;font-size:.68rem;text-align:center;white-space:normal}
+      .hero-index{display:none}
+    }
+
 </style>
 </head>
 <body>
