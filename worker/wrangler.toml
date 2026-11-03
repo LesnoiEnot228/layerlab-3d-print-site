@@ -5,4 +5,6 @@ compatibility_date = "2026-10-22"
 # Replace this with your GitHub Pages origin, e.g. "https://yourname.github.io".
 # Do not include a repository path or a trailing slash.
 [vars]
-ALLOWED_ORIGINS = "https://YOUR-GITHUB-USERNAME.github.io"
+ALLOWED_ORIGINS = "https://nimble-stardust-737d28.netlify.app,https://alma-lab.pages.dev,https://lesnoienot228.github.io"
+SUPABASE_URL = "https://btufsjyyybzkgczufnqc.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0dWZzanl5eWJ6a2djenVmbnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3MTE4NjEsImV4cCI6MjEwOTI4Nzg2MX0.5lcRW9qXz-dRVqGhqUXXhOEaUyxwSGwZDF_8ZfoSCUc"

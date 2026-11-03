@@ -1,4 +1,8 @@
 const MAX_FILE_BYTES = 30 * 1024 * 1024;
+const MAX_REVIEW_PHOTO_BYTES = 8 * 1024 * 1024;
+const ALLOWED_REVIEW_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const SUPABASE_REVIEW_BUCKET = "review-photos";
+const reviewRateWindow = new Map();
 const ALLOWED_EXTENSIONS = new Set(["stl", "3mf", "obj"]);
 const ALLOWED_MATERIALS = new Set(["PLA", "PETG"]);
 const ALLOWED_QUANTITIES = new Set(["1", "2", "3", "5", "10+"]);
@@ -111,6 +115,147 @@ function makeOrderId() {
   return `LL-${date}-${suffix}`;
 }
 
+async function telegramSendReview(token, chatId, review, photo) {
+  const details = compactLines([
+    `⭐ Новый отзыв · ${review.id}`,
+    `Имя: ${review.name}`,
+    `Оценка: ${review.rating}/5`,
+    `Текст: ${review.text}`,
+    "Статус: ожидает ручной проверки перед публикацией",
+  ]);
+  if (!photo) {
+    await telegramJsonCall(token, "sendMessage", { chat_id: chatId, text: details });
+    return;
+  }
+
+  const form = new FormData();
+  form.set("chat_id", chatId);
+  form.set("caption", `${review.id} · ${review.name} · ${review.rating}/5`);
+  form.set("photo", photo, clean(photo.name || "review-photo", 100));
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: "POST", body: form });
+  let result;
+  try { result = await response.json(); } catch { throw new Error("telegram-invalid-response"); }
+  if (!response.ok || !result?.ok) throw new Error("telegram-sendPhoto-failed");
+  await telegramJsonCall(token, "sendMessage", { chat_id: chatId, text: details });
+}
+
+function isReviewRateLimited(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const record = reviewRateWindow.get(ip);
+  if (!record || now - record.startedAt >= windowMs) {
+    reviewRateWindow.set(ip, { startedAt: now, count: 1 });
+    return false;
+  }
+  if (record.count >= 3) return true;
+  record.count += 1;
+  if (reviewRateWindow.size > 500) {
+    for (const [key, value] of reviewRateWindow) if (now - value.startedAt >= windowMs) reviewRateWindow.delete(key);
+  }
+  return false;
+}
+
+async function handleReviewRequest(request, env, headers) {
+  const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (isReviewRateLimited(clientIp)) return json({ ok: false, error: "rate-limited" }, 429, headers);
+  const contentLength = Number(request.headers.get("Content-Length") || 0);
+  if (contentLength > MAX_REVIEW_PHOTO_BYTES + 512 * 1024) return json({ ok: false, error: "request-too-large" }, 413, headers);
+  if (!request.headers.get("Content-Type")?.toLowerCase().startsWith("multipart/form-data;")) return json({ ok: false, error: "expected-review-form" }, 415, headers);
+
+  let form;
+  try { form = await request.formData(); } catch { return json({ ok: false, error: "invalid-review-form" }, 400, headers); }
+  if (clean(form.get("website"), 200)) return json({ ok: true, ignored: true }, 200, headers);
+  const review = {
+    id: `RV-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${crypto.randomUUID().replace(/-/g, "").slice(0, 5).toUpperCase()}`,
+    name: clean(form.get("name"), 60),
+    rating: Number(form.get("rating")),
+    text: clean(form.get("text"), 1000),
+  };
+  if (!review.name || !review.text || !Number.isInteger(review.rating) || review.rating < 1 || review.rating > 5) {
+    return json({ ok: false, error: "invalid-review" }, 400, headers);
+  }
+
+  let photo = form.get("photo");
+  if (!photo || typeof photo.arrayBuffer !== "function" || photo.size === 0) photo = null;
+  if (photo) {
+    if (photo.size > MAX_REVIEW_PHOTO_BYTES) return json({ ok: false, error: "review-photo-too-large" }, 413, headers);
+    if (!ALLOWED_REVIEW_PHOTO_TYPES.has(photo.type)) return json({ ok: false, error: "unsupported-review-photo" }, 415, headers);
+    const header = new Uint8Array(await photo.slice(0, 12).arrayBuffer());
+    const isJpeg = header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+    const isPng = header.length >= 8 && header[0] === 0x89 && String.fromCharCode(...header.slice(1, 4)) === "PNG";
+    const isWebp = header.length >= 12 && String.fromCharCode(...header.slice(0, 4)) === "RIFF" && String.fromCharCode(...header.slice(8, 12)) === "WEBP";
+    if (!(isJpeg || isPng || isWebp)) return json({ ok: false, error: "invalid-review-photo" }, 415, headers);
+  }
+
+  try {
+    if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return json({ ok: false, error: "reviews-not-configured" }, 503, headers);
+    const reviewForm = new FormData();
+    reviewForm.set("id", review.id);
+    reviewForm.set("name", review.name);
+    reviewForm.set("rating", String(review.rating));
+    reviewForm.set("text", review.text);
+    if (photo) reviewForm.set("photo", photo, clean(photo.name || "review-photo", 100));
+    const saveResponse = await fetch(`${env.SUPABASE_URL.replace(/\/$/, "")}/functions/v1/review-ingest`, {
+      method: "POST",
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
+      },
+      body: reviewForm,
+    });
+    let saved = {};
+    try { saved = await saveResponse.json(); } catch {}
+    if (!saveResponse.ok || !saved?.ok) {
+      console.error("Supabase review save failed", saveResponse.status);
+      return json({ ok: false, error: "review-save-failed" }, 502, headers);
+    }
+    try {
+      await telegramSendReview(env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID, review, photo);
+      return json({ ok: true, reviewId: review.id, pending: true }, 200, headers);
+    } catch {
+      return json({ ok: true, reviewId: review.id, pending: true, notificationFailed: true }, 202, headers);
+    }
+  } catch {
+    return json({ ok: false, error: "review-save-failed" }, 502, headers);
+  }
+}
+
+async function handlePublishedReviews(env, headers) {
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return json({ ok: false, error: "reviews-not-configured" }, 503, headers);
+  const endpoint = new URL(`${env.SUPABASE_URL.replace(/\/$/, "")}/rest/v1/customer_reviews`);
+  endpoint.search = new URLSearchParams({
+    select: "id,name,rating,body,photo_path,created_at",
+    published: "eq.true",
+    order: "created_at.desc",
+    limit: "12",
+  }).toString();
+  try {
+    const response = await fetch(endpoint, {
+      headers: {
+        apikey: env.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) {
+      console.error("Supabase published reviews request failed", response.status);
+      return json({ ok: false, error: "reviews-unavailable" }, 502, headers);
+    }
+    const rows = await response.json();
+    const base = `${env.SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${SUPABASE_REVIEW_BUCKET}/`;
+    const reviews = Array.isArray(rows) ? rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      rating: row.rating,
+      text: row.body,
+      photo: row.photo_path ? `${base}${encodeURIComponent(row.photo_path)}` : null,
+    })) : [];
+    return json({ ok: true, reviews }, 200, { ...headers, "Cache-Control": "public, max-age=60" });
+  } catch {
+    return json({ ok: false, error: "reviews-unavailable" }, 502, headers);
+  }
+}
+
 function formatOrder(data) {
   const model = data.fileName || data.modelRequest || "Модель не указана";
   const analysis = data.analysis || {};
@@ -188,14 +333,19 @@ export default {
     if (url.pathname === "/health" && request.method === "GET") {
       return json({ ok: true, configured: Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) }, 200, headers);
     }
-    if (url.pathname !== "/api/order") return json({ ok: false, error: "not-found" }, 404, headers);
+    if (url.pathname !== "/api/order" && url.pathname !== "/api/review" && url.pathname !== "/api/reviews") return json({ ok: false, error: "not-found" }, 404, headers);
     if (request.method === "OPTIONS") {
       if (!originAllowed) return json({ ok: false, error: "origin-not-allowed" }, 403);
       return new Response(null, { status: 204, headers });
     }
-    if (request.method !== "POST") return json({ ok: false, error: "method-not-allowed" }, 405, headers);
     if (!originAllowed) return json({ ok: false, error: "origin-not-allowed" }, 403);
+    if (url.pathname === "/api/reviews") {
+      if (request.method !== "GET") return json({ ok: false, error: "method-not-allowed" }, 405, headers);
+      return handlePublishedReviews(env, headers);
+    }
+    if (request.method !== "POST") return json({ ok: false, error: "method-not-allowed" }, 405, headers);
     if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return json({ ok: false, error: "telegram-not-configured" }, 503, headers);
+    if (url.pathname === "/api/review") return handleReviewRequest(request, env, headers);
 
     const contentLength = Number(request.headers.get("Content-Length") || 0);
     if (contentLength > MAX_FILE_BYTES + 512 * 1024) return json({ ok: false, error: "request-too-large" }, 413, headers);
