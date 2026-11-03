@@ -2,8 +2,8 @@ name = "layerlab-order-bot"
 main = "src/index.js"
 compatibility_date = "2026-10-22"
 
-# Replace this with your GitHub Pages origin, e.g. "https://yourname.github.io".
-# Do not include a repository path or a trailing slash.
+# GitHub Pages origin for this repository. Keep the URL origin only: no repository path or trailing slash.
+# If you switch to a custom domain, update this value and redeploy the Worker.
 [vars]
 ALLOWED_ORIGINS = "https://nimble-stardust-737d28.netlify.app,https://alma-lab.pages.dev,https://lesnoienot228.github.io"
 SUPABASE_URL = "https://btufsjyyybzkgczufnqc.supabase.co"

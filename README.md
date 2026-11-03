@@ -27,20 +27,20 @@
 
 Подойдёт бесплатный Cloudflare Workers для приёма файлов размером до 30 МБ из текущей формы. В Bot API Telegram метод `sendDocument` поддерживает файлы до 50 МБ; фактический предел формы оставлен 30 МБ.
 
-1. Откройте Cloudflare Dashboard → **Workers & Pages** → **Create** → **Create Worker**.
-2. Создайте Worker, например `layerlab-order-bot`, откройте его редактор и замените пример кода содержимым файла `worker/src/index.js`.
+1. Откройте Cloudflare Dashboard → **Workers & Pages** и выберите существующий Worker `layerlab-order-bot` либо создайте его с таким именем.
+2. Если создаёте новый Worker, откройте его редактор и замените пример кода содержимым файла `worker/src/index.js`.
 3. В настройках Worker → **Settings → Variables and Secrets** добавьте:
    - `TELEGRAM_BOT_TOKEN` — Secret, токен от BotFather;
    - `TELEGRAM_CHAT_ID` — Secret, ID из шага A;
-   - `ALLOWED_ORIGINS` — обычную переменную со списком разрешённых origin через запятую. Например, `https://YOUR-USERNAME.github.io`. В origin не добавляйте `/repo-name` и не ставьте завершающий `/`. При локальном тестировании можно временно добавить `http://localhost:5500`.
+   - `ALLOWED_ORIGINS` — обычную переменную со списком разрешённых origin через запятую. Для GitHub Pages проекта `layerlab-3d-print-site` обычно это `https://lesnoienot228.github.io` (без `/layerlab-3d-print-site` и без завершающего `/`). Проверь точный адрес сайта в Settings → Pages. При локальном тестировании можно временно добавить `http://localhost:5500`. После правки настройки нажми **Deploy**.
 4. Сохраните изменения и опубликуйте Worker. Его URL будет примерно `https://layerlab-order-bot.<ваш-аккаунт>.workers.dev`.
-5. Проверьте `https://<ваш-worker>.workers.dev/health`: должно быть `{"ok":true,"configured":true}`. Этот endpoint не раскрывает токен или ID чата.
+5. Проверьте `https://<ваш-worker>.workers.dev/health`: должно быть `{"ok":true,"configured":true,"service":"layerlab-order-bot"}`. Если `configured` равно `false`, добавьте секреты и повторно опубликуйте Worker.
 
 > При использовании другого домена сайта добавьте именно origin этого домена в `ALLOWED_ORIGINS`. Если origin отсутствует в allowlist, Worker отклонит запрос.
 
 ### C. Подключить сайт к Worker
 
-Откройте `assets/config.js` и вставьте полный URL API, например:
+`assets/config.js` содержит адрес Worker `https://layerlab-order-bot.lipchyonockhleb.workers.dev/api/order`. Он работает только если такой Worker существует и развёрнут в нужном аккаунте. Если Cloudflare выдал другой URL, замени адрес на него. Пример:
 
 ```js
 window.LAYERLAB_CONFIG = {
