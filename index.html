@@ -318,9 +318,9 @@
       <div class="reviews-layout">
         <div class="reviews-list" id="reviewsList" aria-live="polite"><div class="review-empty"><strong data-i18n="reviewsEmptyTitle">Пока нет опубликованных отзывов</strong><span data-i18n="reviewsEmptyText">Оставьте первый — будем рады обратной связи.</span></div></div>
         <div class="review-form-card reveal"><h3 data-i18n="reviewFormTitle">Оставить отзыв</h3><p data-i18n="reviewFormLead">Оценка, пара слов и фото готового заказа — если хотите.</p>
-          <form class="review-form" id="reviewForm" novalidate>
+          <form class="review-form" id="reviewForm" autocomplete="off" novalidate>
             <div class="review-honeypot" aria-hidden="true"><label for="reviewWebsite">Website</label><input id="reviewWebsite" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-            <div class="field"><label for="reviewName" data-i18n="reviewNameLabel">Ваше имя</label><input id="reviewName" name="name" type="text" maxlength="60" autocomplete="name" required data-i18n-placeholder="reviewNamePlaceholder" placeholder="Например, Анна"></div>
+            <div class="field"><label for="reviewName" data-i18n="reviewNameLabel">Ваше имя</label><input id="reviewName" name="name" type="text" maxlength="60" autocomplete="off" required data-i18n-placeholder="reviewNamePlaceholder" placeholder="Например, Анна"></div>
             <fieldset><legend data-i18n="reviewRatingLabel">Ваша оценка</legend><div class="review-stars" role="radiogroup" data-i18n-aria="reviewRatingAria" aria-label="Оценка от 1 до 5">
               <label><input type="radio" name="rating" value="1" required data-i18n-aria="reviewRatingStar1" aria-label="1 звезда"><span aria-hidden="true">★</span></label><label><input type="radio" name="rating" value="2" data-i18n-aria="reviewRatingStar2" aria-label="2 звезды"><span aria-hidden="true">★</span></label><label><input type="radio" name="rating" value="3" data-i18n-aria="reviewRatingStar3" aria-label="3 звезды"><span aria-hidden="true">★</span></label><label><input type="radio" name="rating" value="4" data-i18n-aria="reviewRatingStar4" aria-label="4 звезды"><span aria-hidden="true">★</span></label><label><input type="radio" name="rating" value="5" data-i18n-aria="reviewRatingStar5" aria-label="5 звёзд"><span aria-hidden="true">★</span></label>
             </div><output class="review-rating-help" id="reviewRatingValue" aria-live="polite" data-i18n="reviewRatingPrompt">Выбери оценку от 1 до 5 звёзд</output></fieldset>
@@ -493,6 +493,13 @@
       $$('.review-stars label',reviewForm).forEach(label=>{const value=Number($('input',label).value);label.classList.toggle('is-selected',Boolean(selected)&&value<=Number(selected))});
       $('#reviewRatingValue').textContent=selected?(lang==='ru'?`Оценка: ${selected} из 5`:`Rating: ${selected} out of 5`):copy[lang].reviewRatingPrompt;
     }
+    function clearReviewDraft(){
+      reviewForm.reset();
+      updateReviewRating();
+      const message=$('#reviewMessage');message.textContent='';message.classList.remove('show','error');
+    }
+    clearReviewDraft();
+    window.addEventListener('pageshow',()=>setTimeout(clearReviewDraft,0));
     reviewForm.querySelectorAll('input[name="rating"]').forEach(input=>input.addEventListener('change',updateReviewRating));
     $$('[data-lang]').forEach(button=>button.addEventListener('click',updateReviewRating));
     updateReviewRating();
@@ -540,4 +547,5 @@
   <script src="assets/model-tools.js"></script>
 </body>
 </html>
+
 
