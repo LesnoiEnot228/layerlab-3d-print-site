@@ -384,7 +384,7 @@
       $$('.order-entry').forEach(card=>card.classList.toggle('selected',card.dataset.orderMode===mode));
       if(shouldScroll)$('#order')?.scrollIntoView({behavior:'smooth',block:'start'});
     }
-    $('.order-entry').forEach(card=>{
+    $$('.order-entry').forEach(card=>{
       card.addEventListener('click',()=>setOrderMode(card.dataset.orderMode));
       card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setOrderMode(card.dataset.orderMode)}});
     });
