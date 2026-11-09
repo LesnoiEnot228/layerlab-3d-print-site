@@ -398,7 +398,7 @@
     Object.assign(copy.en,{serviceIntroEyebrow:'Start an order',serviceIntroTitle:'Choose the easiest<br>way to get started.',serviceIntroLead:'We’ll guide you through the right next step: upload a file, find a model or message us on Telegram.',serviceModeFile:'01 / FILE',serviceFileTitle:'I have a model',serviceFileText:'Upload an STL, OBJ or 3MF file to see an initial price estimate.',serviceModeFind:'02 / SEARCH',serviceFindTitle:'I need to find a model',serviceFindText:'Describe your idea, choose a model from a catalogue and upload it for an estimate.',serviceModeCustom:'03 / CUSTOM',serviceCustomTitle:'I need a custom project',serviceCustomText:'No file, or need a one-of-a-kind model? Message us on Telegram.'});
     Object.assign(copy.ru,{reviewRatingAria:'Оценка от 1 до 5 звёзд',reviewRatingPrompt:'Выбери оценку от 1 до 5 звёзд',reviewRatingStar1:'1 звезда',reviewRatingStar2:'2 звезды',reviewRatingStar3:'3 звезды',reviewRatingStar4:'4 звезды',reviewRatingStar5:'5 звёзд'});
     Object.assign(copy.en,{reviewRatingAria:'Rating from 1 to 5 stars',reviewRatingPrompt:'Choose a rating from 1 to 5 stars',reviewRatingStar1:'1 star',reviewRatingStar2:'2 stars',reviewRatingStar3:'3 stars',reviewRatingStar4:'4 stars',reviewRatingStar5:'5 stars'});
-    let lang='ru', selectedFile=null, toastTimer=null, languageTransitionTimer=null, galleryTransitionId=0;
+    let lang='ru', selectedFile=null, toastTimer=null, languageTransitionTimer=null, galleryExitGhosts=[];
     const galleryFilterAnimations=new WeakMap();
     const $=(s,root=document)=>root.querySelector(s), $$=(s,root=document)=>Array.from(root.querySelectorAll(s));
     function setLanguage(next){
@@ -437,34 +437,36 @@
     const drop=$('#uploadBox');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover')});drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');processFile(e.dataTransfer.files?.[0])});
     $$('.filter').forEach(btn=>{
       btn.setAttribute('aria-pressed',String(btn.classList.contains('active')));
-      btn.addEventListener('click',async()=>{
-        const transitionId=++galleryTransitionId,selected=btn.dataset.filter,reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches,cards=$$('.work-card');
+      btn.addEventListener('click',()=>{
+        const selected=btn.dataset.filter,reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches,cards=$$('.work-card:not(.work-exit-ghost)'),grid=$('.portfolio-grid');
+        if(btn.classList.contains('active'))return;
+        galleryExitGhosts.forEach(ghost=>{galleryFilterAnimations.get(ghost)?.cancel();ghost.remove()});
+        galleryExitGhosts=[];
+        cards.forEach(card=>{galleryFilterAnimations.get(card)?.cancel();galleryFilterAnimations.delete(card);card.classList.remove('gallery-enter','work-exiting')});
+        const previous=new Map(cards.filter(card=>!card.classList.contains('work-hidden')).map(card=>[card,card.getBoundingClientRect()]));
         const shouldShow=new Map(cards.map(card=>[card,selected==='all'||card.dataset.category===selected]));
         $$('.filter').forEach(filter=>{const active=filter===btn;filter.classList.toggle('active',active);filter.setAttribute('aria-pressed',String(active))});
-        cards.forEach(card=>{galleryFilterAnimations.get(card)?.cancel();galleryFilterAnimations.delete(card);card.classList.remove('gallery-enter','work-exiting')});
-        const exiting=cards.filter(card=>!card.classList.contains('work-hidden')&&!shouldShow.get(card));
-        if(!reduced&&typeof Element.prototype.animate==='function'&&exiting.length){
-          await Promise.all(exiting.map(card=>{
-            card.classList.add('work-exiting');
-            const animation=card.animate([{opacity:1,transform:'translate3d(0,0,0) scale(1)'},{opacity:0,transform:'translate3d(0,10px,0) scale(.96)'}],{duration:240,easing:'cubic-bezier(.4,0,.8,.2)'});
-            galleryFilterAnimations.set(card,animation);
-            return animation.finished.catch(()=>{});
-          }));
-          if(transitionId!==galleryTransitionId)return;
-        }
-        const before=new Map(cards.filter(card=>!card.classList.contains('work-hidden')&&shouldShow.get(card)).map(card=>[card,card.getBoundingClientRect()]));
+        if(!reduced&&typeof Element.prototype.animate==='function')cards.forEach((card,index)=>{
+          if(!previous.has(card)||shouldShow.get(card))return;
+          const rect=previous.get(card),ghost=card.cloneNode(true);
+          ghost.classList.add('work-exit-ghost');ghost.setAttribute('aria-hidden','true');ghost.inert=true;
+          Object.assign(ghost.style,{position:'fixed',left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',height:rect.height+'px',margin:'0',zIndex:'30',pointerEvents:'none',transform:'none',opacity:'1',animation:'none',willChange:'transform,opacity,filter'});
+          grid.append(ghost);galleryExitGhosts.push(ghost);
+          const animation=ghost.animate([{opacity:1,transform:'translate3d(0,0,0) scale(1)',filter:'blur(0)'},{opacity:0,transform:'translate3d(0,16px,0) scale(.88)',filter:'blur(5px)'}],{duration:640,delay:Math.min(index*45,180),easing:'cubic-bezier(.3,0,.7,.2)'});
+          galleryFilterAnimations.set(ghost,animation);
+          animation.finished.catch(()=>{}).finally(()=>{ghost.remove();galleryExitGhosts=galleryExitGhosts.filter(item=>item!==ghost);galleryFilterAnimations.delete(ghost)});
+        });
         cards.forEach(card=>card.classList.toggle('work-hidden',!shouldShow.get(card)));
         cards.forEach((card,index)=>{
           if(!shouldShow.get(card))return;
-          card.classList.remove('work-exiting');
-          const previous=before.get(card),current=card.getBoundingClientRect();
+          const oldRect=previous.get(card),newRect=card.getBoundingClientRect();
           if(reduced||typeof card.animate!=='function')return;
           let animation;
-          if(previous){
-            const dx=previous.left-current.left,dy=previous.top-current.top;
-            if(Math.abs(dx)+Math.abs(dy)>1)animation=card.animate([{transform:`translate3d(${dx}px,${dy}px,0)`},{transform:'translate3d(0,0,0)'}],{duration:540,easing:'cubic-bezier(.2,.7,.2,1)'});
+          if(oldRect){
+            const dx=oldRect.left-newRect.left,dy=oldRect.top-newRect.top;
+            if(Math.abs(dx)+Math.abs(dy)>1)animation=card.animate([{opacity:1,transform:`translate3d(${dx}px,${dy}px,0) scale(.94)`},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}],{duration:980,delay:Math.min(index*55,275),easing:'cubic-bezier(.16,1,.3,1)'});
           }else{
-            animation=card.animate([{opacity:0,transform:'translate3d(0,14px,0) scale(.96)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}],{duration:380,delay:Math.min(index*45,225),easing:'cubic-bezier(.2,.7,.2,1)'});
+            animation=card.animate([{opacity:0,transform:'translate3d(0,30px,0) scale(.88)',filter:'blur(5px)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)',filter:'blur(0)'}],{duration:720,delay:Math.min(index*70,350),easing:'cubic-bezier(.16,1,.3,1)'});
           }
           if(animation){galleryFilterAnimations.set(card,animation);animation.finished.catch(()=>{}).finally(()=>{if(galleryFilterAnimations.get(card)===animation)galleryFilterAnimations.delete(card)})}
         });
