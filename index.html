@@ -398,7 +398,8 @@
     Object.assign(copy.en,{serviceIntroEyebrow:'Start an order',serviceIntroTitle:'Choose the easiest<br>way to get started.',serviceIntroLead:'We’ll guide you through the right next step: upload a file, find a model or message us on Telegram.',serviceModeFile:'01 / FILE',serviceFileTitle:'I have a model',serviceFileText:'Upload an STL, OBJ or 3MF file to see an initial price estimate.',serviceModeFind:'02 / SEARCH',serviceFindTitle:'I need to find a model',serviceFindText:'Describe your idea, choose a model from a catalogue and upload it for an estimate.',serviceModeCustom:'03 / CUSTOM',serviceCustomTitle:'I need a custom project',serviceCustomText:'No file, or need a one-of-a-kind model? Message us on Telegram.'});
     Object.assign(copy.ru,{reviewRatingAria:'Оценка от 1 до 5 звёзд',reviewRatingPrompt:'Выбери оценку от 1 до 5 звёзд',reviewRatingStar1:'1 звезда',reviewRatingStar2:'2 звезды',reviewRatingStar3:'3 звезды',reviewRatingStar4:'4 звезды',reviewRatingStar5:'5 звёзд'});
     Object.assign(copy.en,{reviewRatingAria:'Rating from 1 to 5 stars',reviewRatingPrompt:'Choose a rating from 1 to 5 stars',reviewRatingStar1:'1 star',reviewRatingStar2:'2 stars',reviewRatingStar3:'3 stars',reviewRatingStar4:'4 stars',reviewRatingStar5:'5 stars'});
-    let lang='ru', selectedFile=null, toastTimer=null, languageTransitionTimer=null;
+    let lang='ru', selectedFile=null, toastTimer=null, languageTransitionTimer=null, galleryTransitionId=0;
+    const galleryFilterAnimations=new WeakMap();
     const $=(s,root=document)=>root.querySelector(s), $$=(s,root=document)=>Array.from(root.querySelectorAll(s));
     function setLanguage(next){
       clearTimeout(languageTransitionTimer);
@@ -434,7 +435,41 @@
     function processFile(file){if(!file)return;selectedFile=null;const ext=file.name.split('.').pop().toLowerCase();if(!['stl','3mf','obj'].includes(ext)){showToast(copy[lang].invalidFile);return}if(file.size>30*1024*1024){showToast(copy[lang].largeFile);return}selectedFile=file;const size=file.size<1024*1024?(file.size/1024).toFixed(0)+' KB':(file.size/1024/1024).toFixed(2)+' MB';const status=$('#fileStatus');status.innerHTML='';const strong=document.createElement('strong');strong.textContent=copy[lang].fileSelected+': '+file.name;const small=document.createElement('span');small.textContent=' · '+size+' · '+ext.toUpperCase();const remove=document.createElement('button');remove.type='button';remove.textContent=lang==='ru'?'Убрать':'Remove';remove.style.cssText='float:right;background:none;border:0;color:var(--accent);cursor:pointer';remove.addEventListener('click',clearSelectedFile);status.append(strong,small,remove);status.classList.add('show');showToast(copy[lang].fileSelected+': '+file.name)}
     $('#modelFile').addEventListener('change',e=>processFile(e.target.files?.[0]));
     const drop=$('#uploadBox');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover')});drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');processFile(e.dataTransfer.files?.[0])});
-    $$('.filter').forEach(btn=>{btn.setAttribute('aria-pressed',String(btn.classList.contains('active')));btn.addEventListener('click',()=>{const selected=btn.dataset.filter,reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches,cards=$$('.work-card'),before=new Map(cards.map(card=>[card,{rect:card.getBoundingClientRect(),hidden:card.classList.contains('work-hidden')}]));$$('.filter').forEach(b=>{const active=b===btn;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});cards.forEach((card,index)=>{const show=selected==='all'||card.dataset.category===selected;card.classList.remove('gallery-enter');card.style.animationDelay=show?Math.min(index*55,330)+'ms':'0ms';card.classList.toggle('work-hidden',!show)});cards.forEach(card=>{if(card.classList.contains('work-hidden'))return;const previous=before.get(card),current=card.getBoundingClientRect();if(!reduced&&!previous.hidden&&previous.rect.width){const dx=previous.rect.left-current.left,dy=previous.rect.top-current.top;if(Math.abs(dx)+Math.abs(dy)>1&&typeof card.animate==='function')card.animate([{transform:`translate3d(${dx}px,${dy}px,0)`},{transform:'translate3d(0,0,0)'}],{duration:520,easing:'cubic-bezier(.2,.7,.2,1)'})}else if(!reduced)card.classList.add('gallery-enter')})})});
+    $$('.filter').forEach(btn=>{
+      btn.setAttribute('aria-pressed',String(btn.classList.contains('active')));
+      btn.addEventListener('click',async()=>{
+        const transitionId=++galleryTransitionId,selected=btn.dataset.filter,reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches,cards=$$('.work-card');
+        const shouldShow=new Map(cards.map(card=>[card,selected==='all'||card.dataset.category===selected]));
+        $$('.filter').forEach(filter=>{const active=filter===btn;filter.classList.toggle('active',active);filter.setAttribute('aria-pressed',String(active))});
+        cards.forEach(card=>{galleryFilterAnimations.get(card)?.cancel();galleryFilterAnimations.delete(card);card.classList.remove('gallery-enter','work-exiting')});
+        const exiting=cards.filter(card=>!card.classList.contains('work-hidden')&&!shouldShow.get(card));
+        if(!reduced&&typeof Element.prototype.animate==='function'&&exiting.length){
+          await Promise.all(exiting.map(card=>{
+            card.classList.add('work-exiting');
+            const animation=card.animate([{opacity:1,transform:'translate3d(0,0,0) scale(1)'},{opacity:0,transform:'translate3d(0,10px,0) scale(.96)'}],{duration:240,easing:'cubic-bezier(.4,0,.8,.2)'});
+            galleryFilterAnimations.set(card,animation);
+            return animation.finished.catch(()=>{});
+          }));
+          if(transitionId!==galleryTransitionId)return;
+        }
+        const before=new Map(cards.filter(card=>!card.classList.contains('work-hidden')&&shouldShow.get(card)).map(card=>[card,card.getBoundingClientRect()]));
+        cards.forEach(card=>card.classList.toggle('work-hidden',!shouldShow.get(card)));
+        cards.forEach((card,index)=>{
+          if(!shouldShow.get(card))return;
+          card.classList.remove('work-exiting');
+          const previous=before.get(card),current=card.getBoundingClientRect();
+          if(reduced||typeof card.animate!=='function')return;
+          let animation;
+          if(previous){
+            const dx=previous.left-current.left,dy=previous.top-current.top;
+            if(Math.abs(dx)+Math.abs(dy)>1)animation=card.animate([{transform:`translate3d(${dx}px,${dy}px,0)`},{transform:'translate3d(0,0,0)'}],{duration:540,easing:'cubic-bezier(.2,.7,.2,1)'});
+          }else{
+            animation=card.animate([{opacity:0,transform:'translate3d(0,14px,0) scale(.96)'},{opacity:1,transform:'translate3d(0,0,0) scale(1)'}],{duration:380,delay:Math.min(index*45,225),easing:'cubic-bezier(.2,.7,.2,1)'});
+          }
+          if(animation){galleryFilterAnimations.set(card,animation);animation.finished.catch(()=>{}).finally(()=>{if(galleryFilterAnimations.get(card)===animation)galleryFilterAnimations.delete(card)})}
+        });
+      });
+    });
     $$('.faq-q').forEach(btn=>btn.addEventListener('click',()=>{const item=btn.closest('.faq-item'),open=item.classList.toggle('open');btn.setAttribute('aria-expanded',String(open))}));
     const dialog=$('#lightbox');$$('[data-lightbox]').forEach(btn=>btn.addEventListener('click',()=>{const src=btn.dataset.lightbox;$('#lightboxImage').src=src;$('#lightboxImage').alt=btn.dataset.titleRu||'';$('#lightboxTitle').textContent=lang==='ru'?btn.dataset.titleRu:btn.dataset.titleEn;$('#lightboxDesc').textContent=lang==='ru'?btn.dataset.descRu:btn.dataset.descEn;dialog.showModal()}));$('#lightboxClose').addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
     if('IntersectionObserver' in window&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('motion-enabled');const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in-view');observer.unobserve(e.target)}}),{threshold:.12});$$('.reveal').forEach(el=>observer.observe(el))}
