@@ -259,7 +259,7 @@ async function handlePublishedReviews(env, headers) {
 }
 
 function formatOrder(data) {
-  const model = data.fileName || data.modelRequest || "Модель не указана";
+  const model = data.fileName || data.modelRequest || (data.comment ? "Заявка по описанию клиента" : "Модель не указана");
   const analysis = data.analysis || {};
   const analysisLines = [
     analysis.dimensions ? `Габариты: ${analysis.dimensions}` : "",
@@ -386,7 +386,7 @@ export default {
     const data = normalizePayload(rawPayload);
     if (data.website) return json({ ok: true, ignored: true }, 200, headers);
     if (!data.customerName || !data.contact) return json({ ok: false, error: "name-and-contact-required" }, 400, headers);
-    if (!isFileUpload && !data.modelRequest && !data.sourceUrl) return json({ ok: false, error: "model-or-file-required" }, 400, headers);
+    if (!isFileUpload && !data.modelRequest && !data.sourceUrl && !data.comment) return json({ ok: false, error: "model-or-file-required" }, 400, headers);
     if (!ALLOWED_MATERIALS.has(data.material)) return json({ ok: false, error: "invalid-material" }, 400, headers);
     if (!ALLOWED_QUANTITIES.has(data.quantity)) return json({ ok: false, error: "invalid-quantity" }, 400, headers);
     if (!ALLOWED_DELIVERY.has(data.delivery)) return json({ ok: false, error: "invalid-delivery" }, 400, headers);

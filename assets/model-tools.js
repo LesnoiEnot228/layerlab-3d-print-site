@@ -15,10 +15,10 @@ const i18n = {
     badDimensions: 'Размеры выглядят необычно. Проверь единицы STL / OBJ.',
     noEstimate: 'Не получилось надёжно оценить объём сетки. Проверь файл в слайсере — цена будет подтверждена вручную.',
     dims: 'Габариты', triangles: 'треугольников', weight: 'Оценка пластика', time: 'Оценка времени печати',
-    price: 'Предварительная оценка', priceNote: 'Геометрическая оценка с тестовыми расценками; это не результат слайсера. Итоговую цену подтвердим вручную.',
+    price: 'Предварительная оценка', priceNote: 'Проверим модель и сообщим стоимость до печати. Начнём работу только после согласования.',
     needsReview: 'Нужна ручная проверка',
-    analysisEstimateCaution: 'Оценка приблизительная: реальный расход и время зависят от профиля слайсера, стенок, поддержек и ориентации. Используются тестовые расценки, их нужно заменить до публикации.',
-    estimateBeforeAnalysis: 'Выбери STL, 3MF или OBJ — анализ начнётся в браузере.',
+    analysisEstimateCaution: 'Анализ геометрии в браузере не заменяет проверку в слайсере. Проверим модель и сообщим стоимость до печати. Начнём работу только после согласования.',
+    estimateBeforeAnalysis: 'Можно загрузить модель для анализа. Стоимость сообщим после проверки.',
     volumeWarning: 'Объём может быть неточным для открытой, самопересекающейся или повреждённой сетки.',
     sizeWarning: 'Модель может выходить за область печати Ender 3 Pro (около 220 × 220 × 250 мм). Возможно, потребуется изменить ориентацию или разделить модель.',
     sizeOkay: 'Габариты по отдельным осям укладываются в номинальную область печати принтера; ориентацию и поддержки всё равно нужно проверить.',
@@ -35,10 +35,10 @@ const i18n = {
     badDimensions: 'The dimensions look unusual. Check STL / OBJ units.',
     noEstimate: 'Could not reliably estimate the mesh volume. Check the file in a slicer; the price will be confirmed manually.',
     dims: 'Dimensions', triangles: 'triangles', weight: 'Estimated filament', time: 'Estimated print time',
-    price: 'Preliminary estimate', priceNote: 'Geometry-based estimate with temporary rates; it is not slicer output. The final price will be confirmed manually.',
+    price: 'Preliminary estimate', priceNote: 'We’ll review the model and confirm the price before printing. Work starts only after approval.',
     needsReview: 'Manual review needed',
-    analysisEstimateCaution: 'Estimate only: actual material use and time depend on the slicer profile, walls, supports and orientation. Temporary rates must be replaced before launch.',
-    estimateBeforeAnalysis: 'Choose an STL, 3MF or OBJ file. Analysis runs in your browser.',
+    analysisEstimateCaution: 'Browser geometry analysis does not replace a slicer review. We’ll review the model and confirm the price before printing. Work starts only after approval.',
+    estimateBeforeAnalysis: 'Upload a model for analysis if you have one. We’ll confirm the price after review.',
     volumeWarning: 'Volume may be inaccurate for open, self-intersecting, or damaged meshes.',
     sizeWarning: 'The model may exceed the Ender 3 Pro build volume (about 220 × 220 × 250 mm). It may need reorientation or splitting.',
     sizeOkay: 'Each dimension is within the nominal printer build volume; orientation and supports still need checking.',
@@ -320,66 +320,35 @@ function calculateEstimate(metrics) {
   const infill = Number($('#modelInfill')?.value || 15) / 100;
   const layerHeight = Number($('#modelLayer')?.value || 0.2);
   const materialName = $('#material')?.value || 'PLA';
-  const qtyVal = $('#quantity')?.value || '1';
-  const quantity = qtyVal === '10+' ? 10 : Math.max(1, Number(qtyVal) || 1);
-  const material = PRICING.materials[materialName] || PRICING.materials.PLA;
+  const material = ANALYSIS_PARAMETERS.materials[materialName] || ANALYSIS_PARAMETERS.materials.PLA;
   const volume = metrics.volumeMm3;
   const surface = metrics.surfaceMm2;
   // FDM shell + infill approximation. Actual slicer output varies with orientation,
   // top/bottom layers, wall count, support structures and the profile.
-  const shellVolume = Math.min(volume, surface * PRICING.wallThicknessMm);
+  const shellVolume = Math.min(volume, surface * ANALYSIS_PARAMETERS.wallThicknessMm);
   const interiorVolume = Math.max(0, volume - shellVolume);
   const filamentVolume = shellVolume + interiorVolume * infill;
   const grams = filamentVolume / 1000 * material.density;
   const layerCount = Math.max(1, Math.ceil(metrics.dimensions[2] / layerHeight));
-  const extrusionSeconds = filamentVolume / PRICING.flowRateMm3s;
-  const estimatedHours = Math.max(0.12, (extrusionSeconds * PRICING.timeMultiplier + layerCount * PRICING.secondsPerLayer + 240) / 3600);
-  const costFor = (g, h) => {
-    const plasticCost = material.pricePerKg * g / 1000;
-    const electricityCost = (PRICING.printerPowerW / 1000) * h * PRICING.electricityPerKWh;
-    const wearCost = h * PRICING.amortizationPerHour;
-    return plasticCost + electricityCost + wearCost;
-  };
-  const retail = cost => {
-    let factor;
-    if (cost <= 10) factor = 2.5;
-    else if (cost <= 25) factor = 2.0;
-    else if (cost <= 50) factor = 1.7;
-    else factor = 1.5;
-    return Math.max(PRICING.minimumOrder, cost * factor);
-  };
-  const low = retail(costFor(grams * 0.78, estimatedHours * 0.72)) * quantity;
-  const high = retail(costFor(grams * 1.28, estimatedHours * 1.38)) * quantity;
-  const round = value => Math.ceil(value * 2) / 2;
+  const extrusionSeconds = filamentVolume / ANALYSIS_PARAMETERS.flowRateMm3s;
+  const estimatedHours = Math.max(0.12, (extrusionSeconds * ANALYSIS_PARAMETERS.timeMultiplier + layerCount * ANALYSIS_PARAMETERS.secondsPerLayer + 240) / 3600);
   return {
-    grams, estimatedHours, material: materialName, quantity,
-    low: round(Math.min(low, high)), high: round(Math.max(low, high)),
+    grams, estimatedHours, material: materialName,
     filamentVolumeMm3: filamentVolume, layerCount
   };
 }
 
-// DEMO-only assumptions: replace with real spool prices before launch.
-// These do not appear as markup percentages in the customer-facing UI, but client-side
-// JavaScript can be inspected. Move this whole calculation server-side to protect it.
-const PRICING = {
+const ANALYSIS_PARAMETERS = {
   materials: {
-    PLA: { pricePerKg: 45, density: 1.24 },
-    PETG: { pricePerKg: 55, density: 1.27 }
+    PLA: { density: 1.24 },
+    PETG: { density: 1.27 }
   },
-  electricityPerKWh: 0.25,
-  printerPowerW: 360,
-  amortizationPerHour: 0.2,
   wallThicknessMm: 1.2,
   flowRateMm3s: 4.5,
   timeMultiplier: 1.65,
-  secondsPerLayer: 2.1,
-  minimumOrder: 5
+  secondsPerLayer: 2.1
 };
 
-function formatBYN(value) {
-  const number = new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
-  return `${number} BYN`;
-}
 function formatHours(hours) {
   const mins = Math.max(1, Math.round(hours * 60));
   const h = Math.floor(mins / 60), m = mins % 60;
@@ -494,8 +463,6 @@ function setAnalysisError(error) {
 function refreshEstimate() {
   if (!latestMetrics) return;
   const estimate = calculateEstimate(latestMetrics);
-  const mat = $('#material')?.value || 'PLA';
-  const qty = $('#quantity')?.value || '1';
   const modelInfo = `${formatNumber(latestMetrics.dimensions[0])} × ${formatNumber(latestMetrics.dimensions[1])} × ${formatNumber(latestMetrics.dimensions[2])} mm`;
   $('#modelDimensions').textContent = modelInfo;
   $('#modelTriangles').textContent = Math.round(latestMetrics.triangleCount).toLocaleString(language === 'ru' ? 'ru-RU' : 'en-GB');
@@ -514,13 +481,10 @@ function refreshEstimate() {
   }
   $('#modelWeight').textContent = `${formatNumber(estimate.grams, 1)} g`;
   $('#modelTime').textContent = formatHours(estimate.estimatedHours);
-  const range = estimate.low === estimate.high
-    ? `${language === 'ru' ? 'от ' : 'from '}${formatBYN(estimate.low)}`
-    : `${formatBYN(estimate.low)} – ${formatBYN(estimate.high)}`;
-  $('#modelEstimateRange').textContent = range;
-  $('#estimateRange').textContent = range;
+  $('#modelEstimateRange').textContent = tr('needsReview');
+  $('#estimateRange').textContent = tr('needsReview');
   $('#estimateText').textContent = tr('priceNote');
-  $('#modelEstimateNote').textContent = `${tr('priceNote')} ${tr('estimated')}: ${qty} × ${mat}.`;
+  $('#modelEstimateNote').textContent = tr('priceNote');
   const oversized = latestMetrics.dimensions[0] > 220 || latestMetrics.dimensions[1] > 220 || latestMetrics.dimensions[2] > 250;
   const warnings = [];
   if (!latestMetrics.volumeReliable || latestMetrics.volumeRatio < 0.01) warnings.push(tr('volumeWarning'));
