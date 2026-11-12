@@ -162,6 +162,7 @@
     }
     .reviews-layout{display:grid;grid-template-columns:1fr minmax(300px,.82fr);gap:24px;align-items:start}.reviews-list{display:grid;gap:14px}.review-card,.review-empty,.review-form-card{border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,rgba(23,29,37,.9),rgba(13,16,22,.92));padding:24px}.review-empty{color:var(--muted);min-height:150px;display:grid;align-content:center;gap:8px}.review-empty strong{color:var(--text);font-size:1.08rem}.review-card{display:grid;grid-template-columns:1fr auto;gap:10px 16px}.review-card h3{font-size:1rem;margin:0}.review-card p{grid-column:1/-1;margin:0;color:#c1c8d3;white-space:pre-wrap}.review-card img{grid-column:1/-1;width:min(100%,360px);max-height:280px;object-fit:cover;border-radius:14px}.review-rating{color:var(--accent);letter-spacing:.12em;white-space:nowrap}.review-form-card h3{font-size:1.25rem;margin:0 0 6px}.review-form-card>p{color:var(--muted);font-size:.88rem;margin:0 0 20px}.review-form{display:grid;gap:15px}.review-form .field{margin:0}.review-form fieldset{border:0;padding:0;margin:0}.review-form legend,.review-form label{display:block;font-size:.83rem;font-weight:700;margin-bottom:8px}.review-stars{display:flex;gap:8px}.review-stars label{margin:0;cursor:pointer}.review-stars input{position:absolute;opacity:0;pointer-events:none}.review-stars span{display:grid;place-items:center;width:42px;height:42px;border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:1.35rem;transition:.2s}.review-stars input:checked+span,.review-stars label:hover span,.review-stars input:focus-visible+span{color:var(--accent);border-color:var(--accent);background:rgba(148,240,210,.08)}.review-form input[type=text],.review-form input[type=file],.review-form textarea{width:100%;min-height:48px;border:1px solid var(--line);border-radius:13px;background:#10141b;color:var(--text);padding:12px 14px}.review-form textarea{min-height:120px;resize:vertical}.review-form input[type=file]{padding:10px;color:var(--muted);font-size:.82rem}.review-form .form-message{margin:0}.review-form .form-message.show{display:block}.review-form .btn{width:100%}.review-honeypot{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important}
     .review-stars label.is-selected span{color:var(--accent);border-color:var(--accent);background:rgba(148,240,210,.08)}.review-rating-help{margin:-8px 0 0;color:var(--muted);font-size:.78rem}
+    .work-info{display:grid;gap:8px}.work-price{display:flex;align-items:center;flex-wrap:wrap;gap:7px}.work-price strong{font-size:1.08rem;color:var(--text);font-variant-numeric:tabular-nums}.currency-badge{display:inline-flex;align-items:center;padding:3px 7px;border:1px solid rgba(148,240,210,.25);border-radius:999px;background:rgba(148,240,210,.07);color:var(--accent);font-size:.68rem;font-weight:800;letter-spacing:.04em}.work-price-context{font-size:.77rem;color:var(--muted)}.work-price.is-pending{font-size:.82rem}
     @media(max-width:760px){.reviews-layout{grid-template-columns:1fr}.review-form-card,.review-card,.review-empty{padding:19px}}
 </style>
 </head>
@@ -226,33 +227,40 @@
           <button class="work-media" data-lightbox="assets/figurine-cat.webp" data-title-ru="Котёнок" data-title-en="Kitten figure" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Котёнок">
             <img src="assets/figurine-cat.webp" alt="Белый 3D-печатный котёнок" loading="eager"><span class="work-category" data-i18n="categoryFigure">Фигурка</span>
           </button>
+          <div class="work-info"><h3 data-i18n="portfolioWorkKitten">Котёнок</h3><p class="work-price is-pending" data-i18n="portfolioPricePending">Стоимость уточняется</p></div>
         </article>
         <article class="work-card reveal" data-category="figures">
           <button class="work-media" data-lightbox="assets/figurine-sculpture.webp" data-title-ru="Фигурка" data-title-en="Printed sculpture" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Фигурка">
             <img src="assets/figurine-sculpture.webp" alt="Декоративная 3D-печатная фигурка" loading="eager"><span class="work-category" data-i18n="categoryFigure">Фигурка</span>
           </button>
+          <div class="work-info"><h3 data-i18n="portfolioWorkFigure">Фигурка</h3><p class="work-price"><strong>50</strong><span class="currency-badge">BYN</span><span class="work-price-context" data-i18n="portfolioPriceForWork">за эту работу</span></p></div>
         </article>
         <article class="work-card reveal" data-category="parts">
           <button class="work-media" data-lightbox="assets/functional-part.webp" data-title-ru="Функциональная деталь" data-title-en="Functional part" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Функциональная деталь">
             <img src="assets/functional-part.webp" alt="Функциональная деталь, напечатанная на 3D-принтере" loading="eager"><span class="work-category" data-i18n="categoryPart">Деталь</span>
           </button>
+          <div class="work-info"><h3 data-i18n="portfolioWorkFunctionalPart">Функциональная деталь</h3><p class="work-price"><strong>10</strong><span class="currency-badge">BYN</span><span class="work-price-context" data-i18n="portfolioPriceForWork">за эту работу</span></p></div>
         </article>
         <article class="work-card reveal" data-category="figures">
           <button class="work-media" data-lightbox="assets/c131c8cd-6309-4d03-8123-30ce09827b5a.png" data-title-ru="Фигурка щенка" data-title-en="Dog figure" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Фигурка щенка">
             <img src="assets/c131c8cd-6309-4d03-8123-30ce09827b5a.png" alt="Фигурка щенка из белого пластика" loading="eager"><span class="work-category" data-i18n="categoryFigure">Фигурка</span>
           </button>
+          <div class="work-info"><h3 data-i18n="portfolioWorkPuppy">Фигурка щенка</h3><p class="work-price is-pending" data-i18n="portfolioPricePending">Стоимость уточняется</p></div>
         </article>
         <article class="work-card reveal" data-category="parts">
           <button class="work-media" data-lightbox="assets/4d5d6b2d-8e56-4123-8d18-ba1f2d3edd55.png" data-title-ru="Крепление" data-title-en="Printed mount" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Крепление">
             <img src="assets/4d5d6b2d-8e56-4123-8d18-ba1f2d3edd55.png" alt="Небольшая функциональная деталь" loading="eager"><span class="work-category" data-i18n="categoryPart">Деталь</span>
           </button>
+          <div class="work-info"><h3 data-i18n="portfolioWorkMount">Крепление</h3><p class="work-price is-pending" data-i18n="portfolioPricePending">Стоимость уточняется</p></div>
         </article>
         <article class="work-card reveal" data-category="figures">
           <button class="work-media" data-lightbox="assets/d98ac8b1-f2e1-4b4a-9156-beda47d346ac.png" data-title-ru="Декоративная модель" data-title-en="Decorative model" data-desc-ru="" data-desc-en="" aria-label="Увеличить фотографию: Декоративная модель">
             <img src="assets/d98ac8b1-f2e1-4b4a-9156-beda47d346ac.png" alt="Белая декоративная модель" loading="eager"><span class="work-category" data-i18n="categoryFigure">Фигурка</span>
           </button>
+          <div class="work-info"><h3 data-i18n="portfolioWorkDecorativeModel">Декоративная модель</h3><p class="work-price is-pending" data-i18n="portfolioPricePending">Стоимость уточняется</p></div>
         </article>
       </div>
+      <p class="gallery-note" data-i18n="portfolioPriceNote">Указанная цена относится только к изделию на фото. Стоимость других моделей подтвердим после проверки.</p>
     </div></section>
 
     <section class="section" id="process"><div class="container">
@@ -400,6 +408,8 @@
     Object.assign(copy.en,{reviewRatingAria:'Rating from 1 to 5 stars',reviewRatingPrompt:'Choose a rating from 1 to 5 stars',reviewRatingStar1:'1 star',reviewRatingStar2:'2 stars',reviewRatingStar3:'3 stars',reviewRatingStar4:'4 stars',reviewRatingStar5:'5 stars'});
     Object.assign(copy.ru,{ideaOrderLink:'Нет файла? Опиши идею',orderAfterSubmit:'Заявка отправится мастеру в Telegram. Стоимость согласуем до начала печати.'});
     Object.assign(copy.en,{ideaOrderLink:'No file? Describe your idea',orderAfterSubmit:'Your request will go to the maker on Telegram. We’ll agree on the price before printing starts.'});
+    Object.assign(copy.ru,{portfolioWorkKitten:'Котёнок',portfolioWorkFigure:'Фигурка',portfolioWorkFunctionalPart:'Функциональная деталь',portfolioWorkPuppy:'Фигурка щенка',portfolioWorkMount:'Крепление',portfolioWorkDecorativeModel:'Декоративная модель',portfolioPricePending:'Стоимость уточняется',portfolioPriceForWork:'за эту работу',portfolioPriceNote:'Указанная цена относится только к изделию на фото. Стоимость других моделей подтвердим после проверки.'});
+    Object.assign(copy.en,{portfolioWorkKitten:'Kitten figure',portfolioWorkFigure:'Figure',portfolioWorkFunctionalPart:'Functional part',portfolioWorkPuppy:'Puppy figure',portfolioWorkMount:'Printed mount',portfolioWorkDecorativeModel:'Decorative model',portfolioPricePending:'Price to be confirmed',portfolioPriceForWork:'for this item',portfolioPriceNote:'The listed price applies only to the item shown. We will confirm prices for other models after review.'});
     let lang='ru', selectedFile=null, toastTimer=null, languageTransitionTimer=null, galleryTransitionId=0;
     const galleryFilterAnimations=new WeakMap();
     const $=(s,root=document)=>root.querySelector(s), $$=(s,root=document)=>Array.from(root.querySelectorAll(s));
