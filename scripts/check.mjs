@@ -13,7 +13,7 @@ const fail = (msg) => {
 }
 
 // 1. Inline <script> blocks parse cleanly.
-const blocks = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
+const blocks = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].filter((m) => !/ld\+json/i.test(m[0]))
 blocks.forEach((block, i) => {
   try {
     new vm.Script(block[1], { filename: `index.html#inline-${i + 1}` })

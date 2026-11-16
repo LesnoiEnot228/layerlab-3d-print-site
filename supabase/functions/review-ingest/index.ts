@@ -29,6 +29,13 @@ Deno.serve(async (request: Request) => {
   const secretKeysValue = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (!url || !secretKeysValue) return respond({ ok: false, error: "server-not-configured" }, 503);
 
+  // When REVIEW_INGEST_SECRET is configured, only the Worker (which knows the secret)
+  // may call this function. Without it, keep the legacy open behaviour.
+  const expectedSecret = Deno.env.get("REVIEW_INGEST_SECRET");
+  if (expectedSecret && request.headers.get("x-review-secret") !== expectedSecret) {
+    return respond({ ok: false, error: "forbidden" }, 403);
+  }
+
   let secretKey: string;
   try {
     secretKey = JSON.parse(secretKeysValue).default;

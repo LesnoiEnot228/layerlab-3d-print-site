@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://alma-lab.pages.dev/sitemap.xml

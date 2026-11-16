@@ -43,7 +43,7 @@ function checkI18n(root: string): string {
 
 function checkInlineJs(root: string): string {
   const html = read(root, "index.html")
-  const blocks = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
+  const blocks = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].filter((m) => !/ld\+json/i.test(m[0]))
   if (!blocks.length) return "FAIL: no inline <script> blocks found"
   const errors: string[] = []
   blocks.forEach((block, i) => {

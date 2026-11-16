@@ -3,6 +3,7 @@ const MAX_REVIEW_PHOTO_BYTES = 8 * 1024 * 1024;
 const ALLOWED_REVIEW_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const SUPABASE_REVIEW_BUCKET = "review-photos";
 const reviewRateWindow = new Map();
+const orderRateWindow = new Map();
 const ALLOWED_EXTENSIONS = new Set(["stl", "3mf", "obj"]);
 const ALLOWED_MATERIALS = new Set(["PLA", "PETG"]);
 const ALLOWED_QUANTITIES = new Set(["1", "2", "3", "5", "10+"]);
@@ -141,20 +142,28 @@ async function telegramSendReview(token, chatId, review, photo) {
   await telegramJsonCall(token, "sendMessage", { chat_id: chatId, text: details });
 }
 
-function isReviewRateLimited(ip) {
+function isRateLimited(map, ip, limit) {
   const now = Date.now();
   const windowMs = 60 * 1000;
-  const record = reviewRateWindow.get(ip);
+  const record = map.get(ip);
   if (!record || now - record.startedAt >= windowMs) {
-    reviewRateWindow.set(ip, { startedAt: now, count: 1 });
+    map.set(ip, { startedAt: now, count: 1 });
     return false;
   }
-  if (record.count >= 3) return true;
+  if (record.count >= limit) return true;
   record.count += 1;
-  if (reviewRateWindow.size > 500) {
-    for (const [key, value] of reviewRateWindow) if (now - value.startedAt >= windowMs) reviewRateWindow.delete(key);
+  if (map.size > 500) {
+    for (const [key, value] of map) if (now - value.startedAt >= windowMs) map.delete(key);
   }
   return false;
+}
+
+function isReviewRateLimited(ip) {
+  return isRateLimited(reviewRateWindow, ip, 3);
+}
+
+function isOrderRateLimited(ip) {
+  return isRateLimited(orderRateWindow, ip, 5);
 }
 
 async function handleReviewRequest(request, env, headers) {
@@ -202,6 +211,7 @@ async function handleReviewRequest(request, env, headers) {
       headers: {
         apikey: env.SUPABASE_ANON_KEY,
         Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
+        ...(env.REVIEW_INGEST_SECRET ? { "X-Review-Secret": env.REVIEW_INGEST_SECRET } : {}),
       },
       body: reviewForm,
     });
@@ -358,6 +368,8 @@ export default {
     if (request.method !== "POST") return json({ ok: false, error: "method-not-allowed" }, 405, headers);
     if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return json({ ok: false, error: "telegram-not-configured" }, 503, headers);
     if (url.pathname === "/api/review") return handleReviewRequest(request, env, headers);
+    const orderClientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+    if (isOrderRateLimited(orderClientIp)) return json({ ok: false, error: "rate-limited" }, 429, headers);
 
     const contentLength = Number(request.headers.get("Content-Length") || 0);
     if (contentLength > MAX_FILE_BYTES + 512 * 1024) return json({ ok: false, error: "request-too-large" }, 413, headers);
