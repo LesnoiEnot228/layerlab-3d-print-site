@@ -1,0 +1,10 @@
+{
+  "name": "alma-lab-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Alma Lab 3D printing site — static Pages site + Cloudflare Worker + Supabase Edge Function. No build step; scripts are plain Node checks.",
+  "scripts": {
+    "check": "node scripts/check.mjs"
+  }
+}

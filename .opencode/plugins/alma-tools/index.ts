@@ -76,6 +76,25 @@ export default Plugin.define({
   id: "alma-tools",
   async setup(ctx) {
     const root = ctx.location.directory
+    await ctx.session.hook("context", (event) => {
+      event.system.push({
+        type: "text",
+        text: "Alma Lab repo rules: after editing index.html call alma_inline_js_check and alma_i18n_check; before reporting Worker changes call alma_worker_health. Never submit real orders/reviews to production without the owner's explicit approval.",
+      })
+    })
+    await ctx.command.transform((editor) => {
+      editor.add({
+        name: "alma-check",
+        description: "Run all Alma Lab checks (i18n parity, inline JS syntax, Worker /health)",
+        execute: async ({ sessionID, prompt, delivery }) => {
+          await ctx.session.prompt({
+            sessionID,
+            delivery,
+            text: "Run the alma_i18n_check, alma_inline_js_check and alma_worker_health tools and report their raw results. Do not edit anything.",
+          })
+        },
+      })
+    })
     await ctx.tool.transform((editor) => {
       editor.namespace({ name: "alma", description: "Read-only checks for the Alma Lab site" })
       editor.add({
