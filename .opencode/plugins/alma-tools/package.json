@@ -1,0 +1,12 @@
+{
+  "name": "alma-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "@opencode/plugin": "^2.3.0"
+  }
+}
